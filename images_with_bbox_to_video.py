@@ -70,29 +70,25 @@ for (uri, box, label, score) in result:
 	    'score': score
     }
 
-dir = os.path.realpath("data/Mojito_10s")
 tdir = f"/tmp/bbox"
-if not os.path.exists(tdir):
-    os.mkdir(tdir)
 
 def write_bbox_image(row):
+    if not os.path.exists(tdir):
+        os.mkdir(tdir)
+    dir = os.path.realpath("data/Mojito_10s")
     png = row.value
-    for png in os.listdir("data/Mojito_10s"):
-        full_png = f"file://{dir}/{png}"
-        full_png_bbox = f"{tdir}/{png}"
-        if not full_png.endswith("png"):
-            continue
-        if os.path.exists(full_png_bbox):
-            continue
-        if full_png in result_dict:
-            image = Image(full_png)
-            image = image | result_dict[full_png]['box']
-            with image.to_image().to_pil() as img:
-                img = cv2.cvtColor(numpy.array(img), cv2.COLOR_BGRA2BGR)
-                imwrite(f"{tdir}/{png}", img)
-        else:
-            image = Image(full_png)
-            image.save(f"{tdir}/{png}")
+    full_png = f"file://{dir}/{png}"
+    if not full_png.endswith("png"):
+        return 
+    if full_png in result_dict:
+        image = Image(full_png)
+        image = image | result_dict[full_png]['box']
+        with image.to_image().to_pil() as img:
+            img = cv2.cvtColor(numpy.array(img), cv2.COLOR_BGRA2BGR)
+            imwrite(f"{tdir}/{png}", img)
+    else:
+        image = Image(full_png)
+        image.save(f"{tdir}/{png}")
 
 df = spark.createDataFrame(os.listdir("data/Mojito_10s"), schema="string")
 df.foreach(write_bbox_image)
